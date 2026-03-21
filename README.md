@@ -9,7 +9,8 @@ The **Chitara AI Music Generator** is a standalone web-based system that allows 
  |___ mysite/ <br>
  |___ accounts/ <br>
  |___ musics/ <br>
- |___ manage.py
+ |___ manage.py <br>
+ |___ . . .
 ### Direction Responsibility
 - **mysite/** : main configuration and entry point of the whole project.
 - **accounts/** : handle user data, perform simple CRUD of the user data and Account Authentication
