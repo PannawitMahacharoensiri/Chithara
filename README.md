@@ -16,22 +16,39 @@ The **Chitara AI Music Generator** is a standalone web-based system that allows 
 - **musics/** : handle all music data, perform a simple CRUD of the music data with Music Generation, Music Playback, Music Library, Music Sharing and Download feature.
 
 ## Basic setup instructions:
-assume user has working GITHUB account
-1. Clone  this repository to your local machine
-2. (optional) create and run python vitual environment before excute the project file  
-> *run this code inside the project directory with your command prompt(Window)*
+Assume you already have a working GitHub account.
+#### 1. Clone  this repository to your local machine
+```
+git clone <your-repo-url> 
+cd <your-project-folder>
+```
+#### 2. Create and activate a virtual environment (optional)   
+
+(Window) command prompt :
 ```
 # Create python vitual environment (only for the first time) 
-...> python -m venv venv_name
+python -m venv <venv_name>
 # Run vitual environment 
-...> venv_name\Scripts\activate
+<venv_name>\Scripts\activate
 
 ```
-3. Run the program via this command 
-> *run this code inside the project directory with your command prompt(Window)*
+ (Mac/Linux) Terminal :
 ```
-(venv_name)...> python manage.py runserver
+python3 -m venv <venv_name> 
+source <venv_name>/bin/activate
 ```
+
+#### 3. Apply database migrations
+```
+python manage.py migrate
+```
+
+#### 4. Run the development server
+```
+python manage.py runserver
+```
+Then open your browser at:
+http://127.0.0.1:8000/
 
 ## Demonstration Video:
 [CRUD demonstrate video ](https://youtu.be/8lFgBuS0Oc8)

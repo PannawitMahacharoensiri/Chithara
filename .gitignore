@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Django stuff
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Environment variables
+.env
+.env.*
+
+# Static files (optional if you collectstatic)
+staticfiles/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Migrations (optional)
+# Comment this OUT if you want to keep migrations (recommended for most cases)
+# */migrations/*
+# !*/migrations/__init__.py
+
+# Node (if you use frontend tools)
+node_modules/
+
+# Celery / Redis
+celerybeat-schedule
+
+# Misc
+*.sqlite3
