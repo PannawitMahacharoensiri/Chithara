@@ -1,4 +1,5 @@
 from django.db import models
+from .utilities.validators import validate_audio_file, validate_file_size
 
 # Enumerations
 class Genre(models.TextChoices):
@@ -27,7 +28,10 @@ class GenerateState(models.TextChoices):
 # Main music model
 class Music(models.Model):
     display_name = models.CharField(max_length=100)
-    audio_file = models.FileField(upload_to="music/")
+    audio_file = models.FileField(
+        upload_to="music/",
+        validators=[validate_audio_file, validate_file_size]
+    )
     genre = models.CharField(max_length=20, choices=Genre.choices)
     mood = models.CharField(max_length=20, choices=Mood.choices)
     usage_occupation = models.CharField(max_length=100, blank=True)

@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Tell Django to use this specific model in account
+AUTH_USER_MODEL = ("accounts"
+                   ".User")
 
 # Application definition
 
