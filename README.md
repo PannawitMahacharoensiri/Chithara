@@ -23,7 +23,6 @@ Assume you already have a working GitHub account.
 #### 1. Clone  this repository to your local machine
 ```
 git clone https://github.com/PannawitMahacharoensiri/Chithara.git 
-cd chithara
 ```
 #### 2. Create and activate a virtual environment (optional)   
 You may replace **venv_name** with any name that follows standard naming conventions (e.g., snake_case or camelCase).
@@ -34,7 +33,6 @@ You may replace **venv_name** with any name that follows standard naming convent
 python -m venv venv_name
 # Run vitual environment 
 venv_name\Scripts\activate
-
 ```
  (Mac/Linux) Terminal :
 ```
@@ -44,6 +42,7 @@ source venv_name/bin/activate
 
 #### 3. Install dependencies
 ```
+cd Chithara
 pip install -r requirements.txt
 ```
 
@@ -60,4 +59,7 @@ Then open your browser at:
 http://127.0.0.1:8000/
 
 ## Demonstration Video:
-[CRUD demonstrate video ](https://youtu.be/Py9o0Sbzmw4)
+- [CRUD demonstrate video ](https://youtu.be/Py9o0Sbzmw4)
+
+## Project Wiki:
+- [Chithara Wiki](https://github.com/PannawitMahacharoensiri/Chithara/wiki)
