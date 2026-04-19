@@ -1,0 +1,13 @@
+<h1>{{ music.display_name }}</h1>
+<h3>
+    <a href="{% url 'music_list' %}">Back to list</a>
+</h3>
+<p>Genre: {{ music.genre.name }}</p>
+<p>Mood: {{ music.mood.name }}</p>
+<p>Status: {{ music.generate_state }}</p>
+
+{% if music.audio_file %}
+  <audio controls>
+    <source src="{{ music.audio_file.url }}">
+  </audio>
+{% endif %}

@@ -5,4 +5,4 @@ class GenerateState(models.TextChoices):
     PROCESSING = "PROCESSING", "Processing"
     COMPLETED = "COMPLETED", "Completed"
     FAILED = "FAILED", "Failed"
-    CANCELED = "CANCELED", "Canceled"
+    CANCELLED = "CANCELLED", "Cancelled"

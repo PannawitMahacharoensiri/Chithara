@@ -138,4 +138,4 @@ GENERATOR_STRATEGY = "mock"
 # Path
 
 LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/musics/generate/"
+LOGIN_REDIRECT_URL = "/musics/"

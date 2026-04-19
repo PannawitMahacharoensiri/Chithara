@@ -1,0 +1,12 @@
+<h1>Music List</h1>
+<h3>
+  <a href="{% url 'generate_music' %}">Generate New Music</a>
+</h3>
+{% for music in musics %}
+  <div>
+    <a href="{% url 'music_detail' music.id %}">
+      {{ music.display_name }}
+    </a>
+    ({{ music.generate_state }})
+  </div>
+{% endfor %}

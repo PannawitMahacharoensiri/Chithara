@@ -1,5 +1,4 @@
-# MusicGenerationController
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .services.generators.factory import get_generator
 from .models.music_model import Music
 from .models.genre_model import Genre
@@ -7,6 +6,17 @@ from .models.mood_model import Mood
 from musics.enums.generate_state_enum import GenerateState
 from django.contrib.auth.decorators import login_required
 
+
+
+def list_music(request):
+    musics = Music.objects.all().order_by("-created_at")
+    return render(request, "musics/list.html", {"musics": musics})
+
+def music_detail(request, id):
+    music = get_object_or_404(Music, id=id)
+    return render(request, "musics/detail.html", {"music": music})
+
+# MusicGenerationController
 @login_required
 def generate_music(request):
     if request.method == "POST":
