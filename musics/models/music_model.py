@@ -1,7 +1,7 @@
 from django.db import models
-from .GenreModel import Genre
-from .MoodModel import Mood
-from musics.enums.GenerateStateEnum import GenerateState
+from .genre_model import Genre
+from .mood_model import Mood
+from musics.enums.generate_state_enum import GenerateState
 from musics.utilities.validators import validate_audio_file, validate_file_size
 
 
@@ -9,7 +9,9 @@ class Music(models.Model):
     display_name = models.CharField(max_length=100)
     audio_file = models.FileField(
         upload_to="music/",
-        validators=[validate_audio_file, validate_file_size]
+        validators=[validate_audio_file, validate_file_size],
+        null=True,
+        blank=True,
     )
     genre = models.ForeignKey("Genre", on_delete=models.SET_NULL, null=True)
     mood = models.ForeignKey("Mood", on_delete=models.SET_NULL, null=True)

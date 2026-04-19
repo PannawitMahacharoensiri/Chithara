@@ -1,0 +1,19 @@
+<form method="POST">
+  {% csrf_token %}
+
+  <input name="display_name" placeholder="Music name">
+
+  <select name="genre">
+    {% for g in genres %}
+      <option value="{{ g.id }}">{{ g.name }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="mood">
+    {% for m in moods %}
+      <option value="{{ m.id }}">{{ m.name }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Generate</button>
+</form>
