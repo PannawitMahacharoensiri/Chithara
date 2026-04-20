@@ -1,3 +1,6 @@
+{% extends 'base.html' %}
+
+{% block content %}
 <h1>Generated Music</h1>
 
 <p>Name: {{ music.display_name }}</p>
@@ -5,3 +8,4 @@
 <p>Status: {{ music.generate_state }}</p>
 <p>Genre: {{ music.genre }}</p>
 <p>Mood: {{ music.mood }}</p>
+{% endblock %}

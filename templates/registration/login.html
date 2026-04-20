@@ -1,3 +1,9 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block title %}Login - Chithara{% endblock %}
+
+{% block content %}
 <h2>Login</h2>
 
 <form method="post">
@@ -5,3 +11,10 @@
   {{ form.as_p }}
   <button type="submit">Login</button>
 </form>
+
+<hr>
+<p>Or log in with Google:</p>
+<a href="{% provider_login_url 'google' %}">
+  <button type="button">Login with Google</button>
+</a>
+{% endblock %}
