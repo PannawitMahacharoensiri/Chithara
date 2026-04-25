@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if musics %}
+<script>
+  (function() {
+    var hasPending = "{{ has_pending | yesno:'true,false' }}" === "true";
+    if (hasPending) {
+      setTimeout(() => {
+        if (window.htmx) {
+          htmx.ajax('GET', window.location.href, {target: 'main', select: 'main'});
+        } else {
+          window.location.reload();
+        }
+      }, 3000);
+    }
+  })();
+</script>
+{% endif %}
+
+<div class="max-w-6xl mx-auto">
+  <!-- Page Title and Actions -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-4xl font-bold text-white mb-2">Music Library</h1>
+      <p class="text-cyan-100">
+        Your generated tracks collection &middot; {{ musics|length }} track{{ musics|length|pluralize }}
+      </p>
+    </div>
+    <a href="{% url 'generate_music' %}"
+      class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-full hover:shadow-2xl transition-shadow no-underline">
+      <i data-lucide="plus" class="w-5 h-5"></i>
+      Create New
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div class="flex gap-4 mb-6">
+    <div class="flex-1 relative">
+      <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300"></i>
+      <input type="text" id="search-input" placeholder="Search track name..." oninput="filterTracks()"
+        class="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+    </div>
+  </div>
+
+  <!-- Tracks List -->
+  <div class="space-y-3">
+    {% for music in musics %}
+    <div
+      class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-colors track-row"
+      data-name="{{ music.display_name|lower }}">
+      <div class="flex items-center gap-4">
+        <!-- Play / Status Icon Button -->
+        {% if music.generate_state == "COMPLETED" %}
+        {% if music.audio_url %}
+        <audio id="audio-{{ music.id }}" src="{{ music.audio_url }}" preload="metadata"></audio>
+        {% endif %}
+        {% if music.audio_url %}
+        <button id="play-btn-{{ music.id }}" onclick="window.globalPlayer.toggleTrack('{{ music.id }}', '{{ music.audio_url|escapejs }}', '{{ music.display_name|escapejs }}')"
+          class="play-btn-local w-12 h-12 flex items-center justify-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-full hover:shadow-lg transition-shadow flex-shrink-0">
+          <i data-lucide="play" class="w-5 h-5 ml-0.5"></i>
+        </button>
+        {% else %}
+        <div
+          class="w-12 h-12 flex items-center justify-center bg-white/5 text-white/30 rounded-full flex-shrink-0 border border-white/10 cursor-not-allowed">
+          <i data-lucide="play" class="w-5 h-5 ml-0.5"></i>
+        </div>
+        {% endif %}
+        {% elif music.generate_state == "PENDING" %}
+        <div
+          class="w-12 h-12 flex items-center justify-center bg-yellow-500/20 text-yellow-400 rounded-full flex-shrink-0 animate-pulse border border-yellow-500/50">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+        </div>
+        {% else %}
+        <div
+          class="w-12 h-12 flex items-center justify-center bg-red-500/20 text-red-400 rounded-full flex-shrink-0 border border-red-500/50">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        </div>
+        {% endif %}
+
+        <!-- Track Info -->
+        <div class="flex-1 min-w-0">
+          <a href="{% url 'music_detail' music.id %}"
+            class="font-bold text-white mb-1 truncate no-underline hover:text-cyan-300 block transition-colors">
+            {{ music.display_name }}
+          </a>
+          <p class="text-cyan-200 text-sm truncate">{{ music.description|default:"No description available" }}</p>
+        </div>
+
+        <!-- Status Tag -->
+        <div class="hidden md:block px-3 py-1 rounded-full text-sm font-bold flex-shrink-0 border 
+          {% if music.generate_state == 'COMPLETED' %}
+            bg-teal-500/30 text-teal-200 border-teal-500/50
+          {% elif music.generate_state == 'PENDING' %}
+            bg-yellow-500/30 text-yellow-200 border-yellow-500/50
+          {% else %}
+            bg-red-500/30 text-red-200 border-red-500/50
+          {% endif %}
+        ">
+          {{ music.generate_state|title }}
+        </div>
+
+        <!-- Duration -->
+        <div class="hidden md:flex items-center gap-1 text-cyan-100 text-sm flex-shrink-0">
+          <i data-lucide="clock" class="w-4 h-4"></i>
+          <span id="duration-{{ music.id }}">--:--</span>
+        </div>
+
+        <!-- Date -->
+        <div class="hidden lg:flex items-center gap-1 text-cyan-100 text-sm flex-shrink-0 mr-4">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          {{ music.created_at|date:"j/n/Y" }}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-2 flex-shrink-0 items-center">
+          {% if music.generate_state == "PENDING" %}
+          <form action="{% url 'cancel_music' music.id %}" method="POST" class="m-0">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('Are you sure you want to cancel this generation?');"
+              class="px-3 py-2 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 hover:bg-red-500/40 transition-colors text-sm font-medium">
+              Cancel
+            </button>
+          </form>
+          {% endif %}
+
+          <!-- Share (Copy Link) -->
+          <button onclick="copyTrackLink('{{ music.id }}')"
+            class="p-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors"
+            title="Copy Share Link">
+            <i data-lucide="share-2" class="w-5 h-5"></i>
+          </button>
+
+          <!-- Download -->
+          {% if music.audio_url %}
+          <a href="{{ music.audio_url }}" download
+            class="p-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors"
+            title="Download">
+            <i data-lucide="download" class="w-5 h-5"></i>
+          </a>
+          {% else %}
+          <div class="p-2 bg-white/5 border border-white/10 rounded-lg text-white/20 cursor-not-allowed"
+            title="Download unavailable">
+            <i data-lucide="download" class="w-5 h-5"></i>
+          </div>
+          {% endif %}
+
+          <!-- Delete -->
+          <a href="{% url 'delete_music' music.id %}"
+            class="p-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-colors"
+            title="Delete">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-20 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 mt-8">
+      <i data-lucide="music" class="w-16 h-16 text-cyan-400 mx-auto mb-4"></i>
+      <p class="text-xl text-white mb-2">No tracks generated yet</p>
+      <p class="text-cyan-100 mb-6">Start your musical journey by generating your first track</p>
+      <a href="{% url 'generate_music' %}"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-full text-white hover:bg-white/20 transition-colors no-underline">
+        Create Your First Track
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Audio Player Script -->
+<script>
+  function formatDuration(seconds) {
+    if (isNaN(seconds)) return "--:--";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  // Read duration from each audio element once metadata loads
+  document.querySelectorAll('audio[id^="audio-"]').forEach(audio => {
+    const id = audio.id.replace('audio-', '');
+    const label = document.getElementById('duration-' + id);
+    if (!label) return;
+
+    if (audio.readyState >= 1) {
+      label.textContent = formatDuration(audio.duration);
+    } else {
+      audio.addEventListener('loadedmetadata', () => {
+        label.textContent = formatDuration(audio.duration);
+      });
+    }
+  });
+
+  function togglePlay(id, url, title, desc) {
+    if (window.globalPlayer) {
+        window.globalPlayer.toggleTrack(id, url, title, desc);
+    }
+  }
+
+  // Removed unused syncPlayerState function since base.html handles it
+
+  // Copy share link for a track
+  function copyTrackLink(id) {
+    const url = window.location.origin + '/musics/' + id + '/';
+    navigator.clipboard.writeText(url).then(() => {
+      const tooltip = document.createElement('div');
+      tooltip.textContent = 'Link copied!';
+      tooltip.className = 'fixed top-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-cyan-500 text-white rounded-lg shadow-lg z-50 text-sm font-bold';
+      document.body.appendChild(tooltip);
+      setTimeout(() => tooltip.remove(), 2000);
+    });
+  }
+
+  // Search / filter tracks
+  function filterTracks() {
+    const query = document.getElementById('search-input').value.toLowerCase().trim();
+    document.querySelectorAll('.track-row').forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      row.style.display = name.includes(query) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

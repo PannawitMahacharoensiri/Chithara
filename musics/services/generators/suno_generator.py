@@ -21,8 +21,8 @@ class SunoGenerator(MusicGeneratorStrategy):
         if request_data.get("vocal_preference"):
             prompt_parts.append(f"with {request_data.get('vocal_preference')} vocals")
 
-        if request_data.get("generate_description"):
-            prompt_parts.append(request_data.get("generate_description"))
+        if request_data.get("description"):
+            prompt_parts.append(request_data.get("description"))
 
         prompt = " ".join(prompt_parts)
 

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{# ==================================================================== #}
+{# GLOBAL PROJECT PAGE #}
+{# This file is located in the project-level 'templates' directory #}
+{# because it is the main landing page for the entire website and does #}
+{# not belong to any specific app. #}
+{# ==================================================================== #}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="flex flex-col items-center justify-center px-8 py-20 text-center">
+    <div class="flex items-center gap-2 mb-6">
+        <i data-lucide="sparkles" class="w-12 h-12 text-yellow-400"></i>
+    </div>
+    <h1 class="text-6xl font-bold text-white mb-6">
+        AI-Powered Music Generation
+    </h1>
+    <p class="text-xl text-cyan-100 mb-12 max-w-2xl">
+        Transform your ideas into beautiful music with Chithara. Create, customize, and explore unlimited musical
+        possibilities powered by artificial intelligence.
+    </p>
+    <div class="flex gap-4">
+        {% if user.is_authenticated %}
+        <a href="/musics/"
+            class="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-full text-lg hover:shadow-2xl transition-shadow no-underline">
+            Get Started
+        </a>
+        {% else %}
+        <a href="/login/"
+            class="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-full text-lg hover:shadow-2xl transition-shadow no-underline">
+            Get Started
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Features -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-8 py-16 max-w-6xl mx-auto">
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+        <i data-lucide="wand-2" class="w-12 h-12 text-cyan-400 mb-4 block"></i>
+        <h3 class="text-xl font-bold text-white mb-2">AI Generation</h3>
+        <p class="text-cyan-100">
+            Describe your vision and watch as AI creates unique compositions tailored to your style.
+        </p>
+    </div>
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+        <i data-lucide="library" class="w-12 h-12 text-teal-400 mb-4 block"></i>
+        <h3 class="text-xl font-bold text-white mb-2">Music Library</h3>
+        <p class="text-cyan-100">
+            Access and organize all your generated tracks in one beautiful, easy-to-use library.
+        </p>
+    </div>
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+        <i data-lucide="sparkles" class="w-12 h-12 text-cyan-300 mb-4 block"></i>
+        <h3 class="text-xl font-bold text-white mb-2">Endless Creativity</h3>
+        <p class="text-cyan-100">
+            Experiment with genres, moods, and instruments to craft the perfect soundtrack.
+        </p>
+    </div>
+</div>
+
+<!-- Landing Page Background Music Player -->
+<div
+    class="fixed bottom-8 right-8 bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-2 px-4 flex items-center gap-3 z-50 shadow-2xl transition-all hover:bg-black/60 group">
+    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 flex items-center justify-center animate-[spin_4s_linear_infinite]"
+        id="landing-disc">
+        <i data-lucide="music" class="w-4 h-4 text-white"></i>
+    </div>
+    <div class="flex flex-col">
+        <span class="text-xs text-cyan-400 font-bold uppercase tracking-wider">Now Playing</span>
+        <span class="text-sm text-white font-medium">WIN</span>
+    </div>
+    <button id="landing-play-pause"
+        class="ml-2 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors focus:outline-none">
+        <i data-lucide="pause" class="w-4 h-4" id="landing-play-icon"></i>
+    </button>
+
+    <audio id="landing-audio" loop src="/media/WIN.mp3"></audio>
+</div>
+
+<script>
+    (function () {
+        // Safely stop global player only if it's already initialized and playing.
+        // This prevents a crash on first load when the global-player-container hasn't been parsed yet.
+        if (window.globalPlayer && window.globalPlayer.audio && !window.globalPlayer.audio.paused) {
+            try {
+                window.globalPlayer.close();
+            } catch (e) {
+                console.error("Could not close global player:", e);
+            }
+        }
+
+        const audio = document.getElementById('landing-audio');
+        const playPauseBtn = document.getElementById('landing-play-pause');
+        const disc = document.getElementById('landing-disc');
+
+        if (!audio || !playPauseBtn || !disc) return;
+
+        audio.volume = 0.6;
+
+        const updateState = () => {
+            const isPaused = audio.paused;
+            // Update the button's innerHTML directly to avoid ID loss when Lucide converts <i> to <svg>
+            playPauseBtn.innerHTML = `<i data-lucide="${isPaused ? 'play' : 'pause'}" class="w-4 h-4 ${isPaused ? 'ml-[2px]' : ''}"></i>`;
+            if (window.lucide) lucide.createIcons();
+            
+            if (isPaused) {
+                disc.classList.remove('animate-[spin_4s_linear_infinite]');
+            } else {
+                disc.classList.add('animate-[spin_4s_linear_infinite]');
+            }
+        };
+
+        // Bind directly to audio events so the UI is always perfectly in sync
+        audio.addEventListener('play', updateState);
+        audio.addEventListener('pause', updateState);
+
+        let autoplayAttempted = false;
+
+        const tryAutoplay = () => {
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Auto-play was prevented by the browser. 
+                    updateState();
+                });
+            } else {
+                updateState();
+            }
+        };
+
+        // 1. Try to autoplay immediately
+        tryAutoplay();
+
+        // 2. Workaround for Browser Autoplay Policies: 
+        // If the browser blocked it initially, try playing it on the user's VERY FIRST interaction with the page.
+        const playOnFirstInteraction = () => {
+            if (audio.paused && !autoplayAttempted) {
+                autoplayAttempted = true;
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {}); // Ignore errors if still blocked
+                }
+            }
+            // Remove listeners after first interaction
+            document.removeEventListener('click', playOnFirstInteraction);
+            document.removeEventListener('keydown', playOnFirstInteraction);
+        };
+
+        document.addEventListener('click', playOnFirstInteraction);
+        document.addEventListener('keydown', playOnFirstInteraction);
+
+        // 3. Manual toggle via the button
+        playPauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering the document click listener
+            autoplayAttempted = true; // User manually controlled it, stop trying to auto-play
+            if (audio.paused) {
+                audio.play();
+            } else {
+                audio.pause();
+            }
+        });
+
+        // Stop audio when navigating away via HTMX
+        document.body.addEventListener('htmx:beforeSwap', function (e) {
+            if (audio) {
+                audio.pause();
+                audio.removeAttribute('src'); // force stop and release memory
+            }
+            document.removeEventListener('click', playOnFirstInteraction);
+            document.removeEventListener('keydown', playOnFirstInteraction);
+        }, { once: true });
+    })();
+</script>
+{% endblock %}

@@ -6,15 +6,30 @@ The **Chitara AI Music Generator** is a standalone web-based system that allows 
 ## Project Structure:
 ### Structure Diagram
 **chithara**  
- |___ mysite/ <br>
- |___ accounts/ <br>
- |___ musics/ <br>
- |___ manage.py <br>
- |___ . . .
-### Direction Responsibility
-- **mysite/** : main configuration and entry point of the whole project.
-- **accounts/** : handle user data, perform simple CRUD of the user data and Account Authentication
-- **musics/** : handle all music data, perform a simple CRUD of the music data with Music Generation, Music Playback, Music Library, Music Sharing and Download feature.
+ ├── mysite/
+ ├── accounts/
+ ├── media/
+ ├── templates/
+ ├── musics/
+ │   ├── enums/
+ │   ├── migrations/
+ │   ├── models/
+ │   ├── services/
+ │   ├── templates/
+ │   └── utilities/
+ └── manage.py
+ 
+### Directory Responsibility
+- **mysite/** : Main Django configuration, project-level URL routing, and global settings.
+- **accounts/** : Handles user authentication. Intentionally kept lightweight as it relies heavily on Django's built-in auth system.
+- **media/** : Stores local media files, such as the `WIN.mp3` default landing page track and mock audio files.
+- **templates/** : Project-level global HTML templates (`base.html`, `index.html`, and global auth overrides).
+- **musics/** : The core application handling music generation, playback, and library management. It uses a highly modular architecture:
+  - `models/`: Database schemas explicitly separated into `music_model.py`, `genre_model.py`, and `mood_model.py`.
+  - `enums/`: Reusable database choices (`generate_state_enum.py`, `generate_strategy_enum.py`).
+  - `services/generators/`: Strategy Design Pattern implementation for hot-swapping APIs (`mock_generator.py`, `suno_generator.py`).
+  - `utilities/`: Extracted helper logic (`music_form.py`, `polling_task.py`, `visual_suno_quota.py`, `create_default_music.py`).
+  - `templates/`: App-specific frontend components (`library.html`, `detail.html`, etc.) that inherit from the global base layout.
 
 ## Basic setup instructions:
 Assume you already have a working GitHub account.
@@ -46,20 +61,51 @@ cd Chithara
 pip install -r requirements.txt
 ```
 
-#### 4. Apply database migrations
+#### 4. Set up the Key
+Create a `.env` file inside the `chithara/` directory (the same folder that contains `manage.py`) and add the following variables:
+
+```env
+# --- Suno AI ---
+SUNO_API_KEY=your_suno_api_key_here
+
+# --- Google OAuth ---
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+```
+
+You can follow these guides on the project Wiki to obtain each key:
+- **SUNO_API_KEY** → [Suno API Key Setup](https://github.com/PannawitMahacharoensiri/Chithara/wiki/Suno-API-Key-Setup)
+- **GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET** → [Google Cloud OAuth Setup](https://github.com/PannawitMahacharoensiri/Chithara/wiki/Google-Cloud-OAuth-Setup)
+
+> Never commit your `.env` file to version control. Make sure `.env` is always listed in `.gitignore`.
+
+#### 5. Apply database migrations
 ```
 python manage.py migrate
 ```
 
-#### 5. Run the development server
+#### 6. Run the development server
 ```
 python manage.py runserver
 ```
 Then open your browser at:
 http://127.0.0.1:8000/
 
+## How to select Generate Strategy (Mock or Suno).
+You can select the generation strategy directly on the **Generate page** it is one of the input fields in the generation form. Simply choose **Mock** (instant, no API key needed) or **Suno** (real AI generation) from the dropdown before submitting.
+
+See the [Demonstration Video](#demonstration-video) below for a live walkthrough.
+
+
+
 ## Demonstration Video:
 - [CRUD demonstrate video ](https://youtu.be/Py9o0Sbzmw4)
 
 ## Project Wiki:
 - [Chithara Wiki](https://github.com/PannawitMahacharoensiri/Chithara/wiki)
+> All of the Analyzed Diagram are kept in the GitHub Wiki. These includes : class diagram (MVC), domain modeling, sequence diagram, Use Case Diagram.
+
+## License
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+© 2026 Pannawit Maharoensiri. All rights reserved.

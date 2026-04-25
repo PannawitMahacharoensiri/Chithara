@@ -75,6 +75,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'musics.utilities.visual_suno_quota.suno_quota',
             ],
         },
     },
@@ -120,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 
@@ -142,7 +143,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Strategy
 
-GENERATOR_STRATEGY = "mock" #suno
+GENERATOR_STRATEGY = "suno" #mock
 SUNO_API_KEY = os.getenv("SUNO_API_KEY")
 
 # Path
@@ -152,7 +153,7 @@ LOGIN_REDIRECT_URL = "/musics/"
 
 # django-allauth settings
 SITE_ID = 1
-ACCOUNT_LOGOUT_ON_GET = False
+ACCOUNT_LOGOUT_ON_GET = True
 LOGOUT_REDIRECT_URL = "/login/"
 
 AUTHENTICATION_BACKENDS = [

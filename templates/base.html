@@ -1,184 +1,291 @@
+{# ==================================================================== #}
+{# GLOBAL LAYOUT TEMPLATE                                               #}
+{# This file is located in the project-level 'templates' directory      #}
+{# because it serves as the base skeleton for the entire application.   #}
+{# All other app-specific templates extend this file.                   #}
+{# ==================================================================== #}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Chithara{% endblock %}</title>
+    <!-- Tailwind CSS for styling matching Figma AI output -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons (used in Figma AI output) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- HTMX for SPA navigation and preserving global audio player -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script>
+      // Initialize Global Player Logic
+      window.globalPlayer = {
+        audio: null,
+        currentTrackId: null,
+        currentTitle: '',
+        currentDesc: '',
+        init: function() {
+          if(!this.audio) {
+              this.audio = document.createElement('audio');
+              this.audio.preload = 'metadata';
+              this.audio.volume = 0.75;
+              this.audio.style.display = 'none';
+              document.getElementById('global-player-container').appendChild(this.audio);
+              
+              this.audio.addEventListener('timeupdate', () => this.updateProgress());
+              this.audio.addEventListener('ended', () => this.onEnded());
+              this.audio.addEventListener('play', () => this.updateState(true));
+              this.audio.addEventListener('pause', () => this.updateState(false));
+              this.audio.addEventListener('loadedmetadata', () => {
+                  document.getElementById('global-time-total').textContent = this.formatTime(this.audio.duration);
+              });
+          }
+        },
+        toggleTrack: function(id, url, title, desc) {
+          this.init();
+          const container = document.getElementById('global-player-container');
+          if (container.classList.contains('translate-y-full')) {
+              container.classList.remove('translate-y-full');
+          }
+          
+          if (this.currentTrackId === id) {
+              if (this.audio.paused) {
+                  if (this.audio.currentTime >= this.audio.duration || this.audio.ended) {
+                      this.audio.currentTime = 0;
+                  }
+                  this.audio.play();
+              } else {
+                  this.audio.pause();
+              }
+          } else {
+              this.currentTrackId = id;
+              this.currentTitle = title;
+              this.audio.src = url;
+              this.audio.load();
+              document.getElementById('global-time-total').textContent = '--:--';
+              this.syncDOMState();
+              this.audio.play().catch(e => console.error("Playback failed:", e));
+          }
+        },
+        togglePlay: function() {
+            if (!this.audio || !this.currentTrackId) return;
+            if (this.audio.paused) {
+                if (this.audio.currentTime >= this.audio.duration || this.audio.ended) {
+                    this.audio.currentTime = 0;
+                }
+                this.audio.play();
+            } else {
+                this.audio.pause();
+            }
+        },
+        updateState: function(isPlaying) {
+            const icon = document.getElementById('global-play-icon');
+            if (icon) {
+                icon.outerHTML = `<i data-lucide="${isPlaying ? 'pause' : 'play'}" class="w-5 h-5 ml-0.5" id="global-play-icon"></i>`;
+            }
+            this.syncDOMState();
+        },
+        syncDOMState: function() {
+            const trackId = this.currentTrackId;
+            const isPlaying = this.audio && !this.audio.paused;
+            
+            // 1. Force global player text and duration to be correct (fixes HTMX history restore bug)
+            const titleEl = document.getElementById('global-title');
+            if (titleEl && this.currentTitle) titleEl.textContent = this.currentTitle;
+            
+            const totalEl = document.getElementById('global-time-total');
+            if (totalEl && this.audio && !isNaN(this.audio.duration)) {
+                totalEl.textContent = this.formatTime(this.audio.duration);
+            }
+            
+            // 2. Sync local library buttons
+            document.querySelectorAll('.play-btn-local').forEach(btn => {
+                btn.innerHTML = '<i data-lucide="play" class="w-5 h-5 ml-0.5"></i>';
+            });
+            if (isPlaying && trackId) {
+                const activeBtn = document.getElementById('play-btn-' + trackId);
+                if (activeBtn) {
+                    activeBtn.innerHTML = '<i data-lucide="pause" class="w-5 h-5"></i>';
+                }
+            }
+
+            const detailBtn = document.getElementById('detail-play-btn');
+            if (detailBtn) {
+                const detailTrackId = detailBtn.getAttribute('data-track-id');
+                if (detailTrackId === trackId && isPlaying) {
+                    detailBtn.innerHTML = '<i data-lucide="pause" class="w-10 h-10"></i>';
+                } else {
+                    detailBtn.innerHTML = '<i data-lucide="play" class="w-10 h-10 ml-1"></i>';
+                }
+            }
+            
+            if (window.lucide) lucide.createIcons();
+        },
+        onEnded: function() {
+            this.updateState(false);
+            this.playNextTrack();
+        },
+        playNextTrack: function() {
+            if (!this.currentTrackId) return;
+            const buttons = Array.from(document.querySelectorAll('.play-btn-local'));
+            if (buttons.length === 0) return;
+            
+            const currentIndex = buttons.findIndex(btn => btn.id === 'play-btn-' + this.currentTrackId);
+            if (currentIndex !== -1 && currentIndex < buttons.length - 1) {
+                for (let i = currentIndex + 1; i < buttons.length; i++) {
+                    const row = buttons[i].closest('.track-row');
+                    if (!row || row.style.display !== 'none') {
+                        buttons[i].click();
+                        return;
+                    }
+                }
+            }
+        },
+        updateProgress: function() {
+            if (!this.audio.duration) return;
+            const percent = (this.audio.currentTime / this.audio.duration) * 100;
+            const prog = document.getElementById('global-progress');
+            if(prog) prog.style.width = percent + '%';
+            const curr = document.getElementById('global-time-current');
+            if(curr) curr.textContent = this.formatTime(this.audio.currentTime);
+        },
+        seek: function(e) {
+            if (!this.audio || !this.audio.duration) return;
+            const container = document.getElementById('global-progress-container');
+            const rect = container.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            this.audio.currentTime = pos * this.audio.duration;
+        },
+        seekVolume: function(e) {
+            if (!this.audio) return;
+            const container = document.getElementById('global-volume-container');
+            const rect = container.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            this.audio.volume = pos;
+            const vol = document.getElementById('global-volume');
+            if(vol) vol.style.width = (pos * 100) + '%';
+        },
+        formatTime: function(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return m + ":" + (s < 10 ? "0" : "") + s;
+        },
+        close: function() {
+            if(this.audio) this.audio.pause();
+            this.currentTrackId = null;
+            document.getElementById('global-player-container').classList.add('translate-y-full');
+            this.syncDOMState();
+        }
+      };
+
+      // Ensure DOM stays perfectly in sync with JS memory during HTMX page transitions
+      function runSync() {
+          if (window.globalPlayer) {
+              window.globalPlayer.syncDOMState();
+          } else {
+              if (window.lucide) lucide.createIcons();
+          }
+      }
+      document.addEventListener('htmx:afterSwap', runSync);
+      document.addEventListener('htmx:historyRestore', runSync);
+      document.addEventListener('DOMContentLoaded', runSync);
+    </script>
     {% block head %}{% endblock %}
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-        .navbar {
-            background-color: #2c3e50;
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin-right: 1.5rem;
-            font-weight: 500;
-            transition: opacity 0.2s;
-        }
-        .navbar a:hover {
-            opacity: 0.8;
-        }
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-right: 2rem !important;
-        }
-        .nav-links {
-            display: flex;
-            align-items: center;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        .btn-logout {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .btn-logout:hover {
-            background-color: #c0392b;
-        }
-        /* UI Components */
-        .badge {
-            display: inline-block;
-            padding: 0.25em 0.6em;
-            font-size: 0.75em;
-            font-weight: 700;
-            line-height: 1;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: 0.25rem;
-            color: #fff;
-        }
-        .badge-warning { background-color: #f39c12; color: #fff; }
-        .badge-success { background-color: #2ecc71; }
-        .badge-danger { background-color: #e74c3c; }
-        .badge-secondary { background-color: #95a5a6; }
-        .badge-info { background-color: #3498db; }
-
-        .spinner {
-            display: inline-block;
-            width: 1em;
-            height: 1em;
-            vertical-align: text-bottom;
-            border: 0.2em solid currentColor;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: spinner-border .75s linear infinite;
-        }
-        @keyframes spinner-border {
-            to { transform: rotate(360deg); }
-        }
-
-        .btn {
-            display: inline-block;
-            font-weight: 400;
-            color: #212529;
-            text-align: center;
-            vertical-align: middle;
-            user-select: none;
-            background-color: transparent;
-            border: 1px solid transparent;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            border-radius: 0.25rem;
-            transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            border-radius: 0.2rem;
-        }
-        .btn-danger {
-            color: #fff;
-            background-color: #e74c3c;
-            border-color: #e74c3c;
-        }
-        .btn-danger:hover {
-            color: #fff;
-            background-color: #c0392b;
-            border-color: #bdc3c7;
-        }
-        
-        .music-card {
-            background: #fff;
-            border: 1px solid #ddd;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .music-card-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #2c3e50;
-            text-decoration: none;
-        }
-        .music-card-title:hover {
-            text-decoration: underline;
-        }
-        .music-card-actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-    </style>
 </head>
-<body>
-    <nav class="navbar">
-        <div class="nav-links">
-            <a href="/musics/" class="navbar-brand">Chithara</a>
-            {% if user.is_authenticated %}
-                <a href="/musics/">My Music</a>
-                <a href="{% url 'generate_music' %}">Generate</a>
-            {% endif %}
+<body class="min-h-screen bg-gradient-to-br from-teal-900 via-cyan-900 to-teal-800 antialiased pb-24" hx-boost="true">
+    <!-- Header matching Figma AI design -->
+    <header class="border-b border-white/10 bg-black/20 backdrop-blur-sm">
+        <div class="flex items-center justify-between px-8 py-4">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-2 text-white no-underline hover:opacity-80 transition-opacity">
+                <i data-lucide="music" class="w-8 h-8"></i>
+                <span class="text-2xl font-bold">Chithara</span>
+            </a>
+            
+            <!-- Navigation -->
+            <nav class="flex items-center gap-6">
+                {% if user.is_authenticated %}
+                    <!-- Quota Indicator -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full" title="Daily Suno Generations">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                        <span class="text-sm font-medium text-white/90">
+                            {{ suno_remaining }} / {{ suno_daily_limit }}
+                        </span>
+                    </div>
+
+                    <a href="/musics/" class="text-white hover:text-cyan-300 font-medium transition-colors">
+                        Library
+                    </a>
+                    <a href="{% url 'generate_music' %}" class="text-cyan-300 hover:text-white font-medium transition-colors">
+                        Generate
+                    </a>
+                    
+                    <!-- User Info & Logout -->
+                    <div class="flex items-center gap-4 ml-2 border-l border-white/20 pl-4">
+                        <span class="text-cyan-100 font-medium text-sm">
+                            Welcome, {{ user.username|default:user.email }}
+                        </span>
+                        <a href="{% url 'account_logout' %}" data-hx-boost="false" class="px-4 py-2 bg-white/10 text-white border border-white/20 rounded-full hover:bg-white/20 transition-colors text-sm font-medium">
+                            Logout
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="/login/" class="px-6 py-2 bg-white text-teal-900 rounded-full hover:bg-teal-50 transition-colors font-medium">
+                        Login
+                    </a>
+                {% endif %}
+            </nav>
         </div>
-        <div class="user-info">
-            {% if user.is_authenticated %}
-                <span>Welcome, <strong>{{ user.username|default:user.email }}</strong></span>
-                <a href="{% url 'account_logout' %}" class="btn-logout">Logout</a>
-            {% else %}
-                <a href="/login/">Login</a>
-            {% endif %}
-        </div>
-    </nav>
-    <main class="container">
+    </header>
+
+    <!-- Main Content -->
+    <main class="px-8 py-8">
         {% block content %}
         {% endblock %}
     </main>
+
+
+
+    <!-- Global Audio Player -->
+    <div id="global-player-container" hx-preserve="true" class="fixed bottom-0 left-0 w-full bg-black/80 backdrop-blur-xl border-t border-white/10 py-4 z-[100] transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div class="max-w-6xl mx-auto px-6 lg:px-8 flex items-center gap-6 w-full">
+            <div class="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-lg shadow-lg flex items-center justify-center">
+                <i data-lucide="music" class="w-6 h-6 text-white"></i>
+            </div>
+            
+            <div class="flex-1 min-w-0 md:max-w-[200px]">
+                <h4 id="global-title" class="text-white font-bold truncate text-base">Track Title</h4>
+            </div>
+            
+            <div class="flex items-center gap-4 flex-shrink-0">
+                <button onclick="window.globalPlayer.togglePlay()" class="w-12 h-12 flex items-center justify-center bg-cyan-400 text-teal-900 rounded-full hover:scale-105 hover:bg-cyan-300 transition-all shadow-lg flex-shrink-0">
+                    <i data-lucide="play" class="w-6 h-6 ml-1" id="global-play-icon"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 hidden md:flex items-center gap-3">
+                <span id="global-time-current" class="text-teal-100 text-xs font-medium w-10 text-right">0:00</span>
+                <div class="h-2.5 flex-1 bg-black/40 rounded-full overflow-hidden cursor-pointer relative group" onclick="window.globalPlayer.seek(event)" id="global-progress-container">
+                    <div id="global-progress" class="h-full w-0 bg-gradient-to-r from-cyan-500 to-teal-400 rounded-full pointer-events-none group-hover:brightness-110 transition-all relative">
+                        <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 translate-x-1/2 transition-opacity"></div>
+                    </div>
+                </div>
+                <span id="global-time-total" class="text-teal-100 text-xs font-medium w-10">0:00</span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-2 w-28 ml-auto flex-shrink-0">
+                <i data-lucide="volume-2" class="w-4 h-4 text-teal-100"></i>
+                <div class="h-2 w-full bg-black/40 rounded-full cursor-pointer relative group" onclick="window.globalPlayer.seekVolume(event)" id="global-volume-container">
+                    <div id="global-volume" class="h-full w-[75%] bg-cyan-400 rounded-full pointer-events-none relative transition-all">
+                        <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 translate-x-1/2 transition-opacity"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="window.globalPlayer.close()" class="text-white/40 hover:text-white transition-colors p-2 flex-shrink-0 ml-2">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
 </body>
 </html>

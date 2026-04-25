@@ -1,18 +1,113 @@
 {% extends 'base.html' %}
 
+{% block title %}Prompt Overview - Chithara{% endblock %}
+
 {% block content %}
-<h1>Prompt Overview</h1>
+<div class="px-4 py-12 max-w-3xl mx-auto text-white">
 
-<p><strong>Display Name:</strong> {{ music.display_name }}</p>
-<p><strong>Genre:</strong> {{ music.genre.name|default:"-" }}</p>
-<p><strong>Mood:</strong> {{ music.mood.name|default:"-" }}</p>
-<p><strong>Usage:</strong> {{ music.usage_occupation|default:"-" }}</p>
-<p><strong>Vocal Preference:</strong> {{ music.vocal_preference|default:"-" }}</p>
-<p><strong>Description:</strong> {{ music.generate_description|default:"-" }}</p>
+  <!-- Back navigation -->
+  <div class="mb-6">
+    <a href="javascript:history.back()"
+      class="inline-flex items-center gap-2 text-teal-400 hover:text-cyan-300 no-underline font-medium transition-colors">
+      <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      Back to Edit
+    </a>
+  </div>
 
-<form method="POST">
+  <div class="text-center mb-10">
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-cyan-400 to-teal-200 bg-clip-text text-transparent">
+      Review Your Prompt
+    </h1>
+    <p class="text-teal-200/70 text-lg max-w-xl mx-auto">
+      Double-check your music details before we start the generation process.
+    </p>
+  </div>
+
+  <!-- Details Card -->
+  {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+        <div class="bg-red-500/10 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl flex items-center gap-3">
+          <i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>
+          <p>{{ message }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div class="bg-teal-900/40 rounded-3xl p-8 md:p-10 border border-teal-700/50 shadow-2xl backdrop-blur-md relative overflow-hidden">
+    <!-- Decorative glow -->
+    <div class="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12">
+      <div class="space-y-1">
+        <p class="text-teal-400 text-xs font-bold tracking-wider uppercase flex items-center gap-2">
+          <i data-lucide="type" class="w-4 h-4"></i> Display Name
+        </p>
+        <p class="text-white text-xl font-medium">{{ music.display_name }}</p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-teal-400 text-xs font-bold tracking-wider uppercase flex items-center gap-2">
+          <i data-lucide="music-2" class="w-4 h-4"></i> Genre
+        </p>
+        <p class="text-white text-xl font-medium">{{ music.genre.name|default:"-" }}</p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-teal-400 text-xs font-bold tracking-wider uppercase flex items-center gap-2">
+          <i data-lucide="smile" class="w-4 h-4"></i> Mood
+        </p>
+        <p class="text-white text-xl font-medium">{{ music.mood.name|default:"-" }}</p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-teal-400 text-xs font-bold tracking-wider uppercase flex items-center gap-2">
+          <i data-lucide="mic" class="w-4 h-4"></i> Vocal Preference
+        </p>
+        <p class="text-white text-xl font-medium">{{ music.vocal_preference|default:"-" }}</p>
+      </div>
+
+      <div class="space-y-1 sm:col-span-2">
+        <p class="text-teal-400 text-xs font-bold tracking-wider uppercase flex items-center gap-2">
+          <i data-lucide="briefcase" class="w-4 h-4"></i> Usage
+        </p>
+        <p class="text-white text-xl font-medium">{{ music.usage_occupation|default:"-" }}</p>
+      </div>
+
+      <div class="space-y-1 sm:col-span-2 bg-black/20 rounded-2xl p-5 border border-white/5">
+        <p class="text-teal-400 text-xs font-bold tracking-wider uppercase flex items-center gap-2 mb-2">
+          <i data-lucide="align-left" class="w-4 h-4"></i> Description
+        </p>
+        <p class="text-teal-50 text-lg leading-relaxed">{{ music.description|default:"No additional description provided." }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <form method="POST" class="mt-10 flex flex-col sm:flex-row gap-5">
     {% csrf_token %}
-    <button type="submit" name="action" value="generate">Generate</button>
-    <button type="submit" name="action" value="cancel">Cancel</button>
-</form>
+    
+    <button type="submit" name="action" value="cancel"
+      class="flex-1 py-4 px-6 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 font-bold text-lg rounded-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 group">
+      <i data-lucide="x" class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300"></i>
+      Cancel Generation
+    </button>
+
+    {% if music.generator_strategy == "suno" and suno_remaining == 0 %}
+    <button type="button" disabled
+      class="flex-1 py-4 px-6 bg-gray-800/50 text-gray-400 border border-gray-700 font-bold text-xl rounded-2xl cursor-not-allowed flex items-center justify-center gap-3">
+      <i data-lucide="ban" class="w-6 h-6"></i>
+      Daily Limit Reached (0/{{ suno_daily_limit }})
+    </button>
+    {% else %}
+    <button type="submit" name="action" value="generate"
+      class="flex-1 py-4 px-6 bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-teal-950 font-bold text-xl rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3">
+      <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
+      Start Generating
+    </button>
+    {% endif %}
+  </form>
+
+</div>
 {% endblock %}

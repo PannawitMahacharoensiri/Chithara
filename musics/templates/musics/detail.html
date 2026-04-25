@@ -1,56 +1,178 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ music.display_name }} - Chithara{% endblock %}
+
 {% block content %}
-{% if music.generate_state == "PENDING" %}
-  <meta http-equiv="refresh" content="5">
-{% endif %}
+<div class="px-4 py-8 max-w-4xl mx-auto text-white">
 
-<div style="display: flex; justify-content: space-between; align-items: center;">
-  <h1>{{ music.display_name }}</h1>
-  <div>
-    {% if music.generate_state == "PENDING" %}
-      <span class="badge badge-warning" style="font-size: 1rem; padding: 0.5rem 1rem;">Generating <div class="spinner"></div></span>
-    {% elif music.generate_state == "COMPLETED" %}
-      <span class="badge badge-success" style="font-size: 1rem; padding: 0.5rem 1rem;">Completed</span>
-    {% elif music.generate_state == "FAILED" %}
-      <span class="badge badge-danger" style="font-size: 1rem; padding: 0.5rem 1rem;">Failed</span>
-    {% else %}
-      <span class="badge badge-secondary" style="font-size: 1rem; padding: 0.5rem 1rem;">{{ music.generate_state }}</span>
-    {% endif %}
+  <!-- Back navigation -->
+  <div class="mb-6">
+    <a href="javascript:history.back()"
+      class="inline-flex items-center gap-2 text-white hover:text-cyan-300 no-underline font-medium">
+      <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      Back
+    </a>
   </div>
-</div>
 
-<h3>
-    <a href="{% url 'music_list' %}">Back to list</a>
-</h3>
-<p>Genre: {{ music.genre.name|default:"-" }}</p>
-<p>Mood: {{ music.mood.name|default:"-" }}</p>
-<p>Usage: {{ music.usage_occupation|default:"-" }}</p>
-<p>Vocal: {{ music.vocal_preference|default:"-" }}</p>
-<p>Description: {{ music.description|default:"-" }}</p>
+  <!-- Header Section -->
+  <div class="mb-8">
+    <h1 class="text-5xl font-bold mb-4">
+      {{ music.display_name }}
+    </h1>
 
-{% if music.generate_state == "PENDING" %}
-  <div style="margin-top: 1rem;">
-    <form action="{% url 'cancel_music' music.id %}" method="POST">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this generation?');">Cancel Generation</button>
-    </form>
+    <div class="mb-4">
+      <span class="px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm inline-block
+        {% if music.generate_state == 'COMPLETED' %} bg-cyan-400 text-teal-900
+        {% elif music.generate_state == 'PENDING' %} bg-yellow-400 text-yellow-900
+        {% else %} bg-red-500 text-white {% endif %}">
+        {{ music.generate_state|title }}
+      </span>
+    </div>
+
+    <div class="flex items-center gap-6 text-sm text-teal-100 font-medium">
+      <span class="flex items-center gap-2">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        {{ music.created_at|date:"j/n/Y g:i A" }}
+      </span>
+      <span class="flex items-center gap-2">
+        <i data-lucide="user" class="w-4 h-4"></i>
+        <span>Owner: {{ music.owner.username|default:"Unknown User" }}</span>
+        <span class="mx-1 opacity-50">|</span>
+        <span>
+          Service:
+          {% if music.generator_strategy == "suno" %}
+          Suno V4_5
+          {% else %}
+          {{ music.generator_strategy|title }}
+          {% endif %}
+        </span>
+      </span>
+    </div>
   </div>
-{% endif %}
 
-<div style="margin-top: 2rem;">
-    <strong>Audio File:</strong>
-    <br><br>
-    {% if music.audio_file %}
-      <audio controls>
-        <source src="{{ music.audio_file.url }}" type="audio/mpeg">
-      </audio>
+  <!-- Audio Player Box -->
+  <div class="bg-teal-900/60 rounded-2xl p-6 mb-6 border border-teal-700/50 shadow-inner">
+    {% if music.audio_url and music.generate_state == "COMPLETED" %}
+    <div class="flex items-center gap-6 justify-center py-4">
+      <!-- Play Button -->
+      <button
+        onclick="window.globalPlayer.toggleTrack('{{ music.id }}', '{{ music.audio_url|escapejs }}', '{{ music.display_name|escapejs }}', '{{ music.description|default:''|escapejs }}')"
+        id="detail-play-btn" data-track-id="{{ music.id }}"
+        class="w-20 h-20 flex items-center justify-center bg-cyan-400 text-teal-900 rounded-full hover:bg-cyan-300 hover:scale-105 transition-all shadow-lg group">
+        <i data-lucide="play" class="w-10 h-10 ml-1"></i>
+      </button>
+      <div class="text-teal-100 font-medium text-lg">
+        Play This Track
+      </div>
+    </div>
     {% else %}
+    <div class="flex flex-col items-center justify-center py-6">
       {% if music.generate_state == "PENDING" %}
-        <p><em>Audio will appear here once generation is complete.</em></p>
+      <i data-lucide="loader-2" class="w-12 h-12 text-yellow-400 animate-spin mb-3"></i>
+      <p class="text-teal-100 font-medium">Audio is currently being generated...</p>
+      {% elif music.generate_state == "FAILED" %}
+      <i data-lucide="alert-circle" class="w-12 h-12 text-red-500 mb-3"></i>
+      <p class="text-teal-100 font-medium">Generation failed. Audio is not available.</p>
       {% else %}
-        -
+      <i data-lucide="music" class="w-12 h-12 text-teal-500 mb-3"></i>
+      <p class="text-teal-100 font-medium">Audio is not available for this track.</p>
       {% endif %}
+    </div>
     {% endif %}
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-4 mb-10">
+    <button onclick="copyShareLink()"
+      class="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-cyan-400 text-teal-900 rounded-xl hover:bg-cyan-300 transition-colors font-bold text-lg shadow-lg">
+      <i data-lucide="share-2" class="w-5 h-5"></i>
+      Share
+    </button>
+
+    {% if music.audio_url %}
+    <a href="{{ music.audio_url }}" download
+      class="px-6 py-4 bg-teal-800/50 border border-teal-600/50 rounded-xl text-teal-100 hover:bg-teal-700/50 hover:text-white transition-colors flex items-center justify-center shadow-lg"
+      title="Download Audio">
+      <i data-lucide="download" class="w-5 h-5"></i>
+    </a>
+    {% endif %}
+
+    <a href="{% url 'generate_music' %}?source={{ music.id }}"
+      class="px-6 py-4 bg-teal-800/50 border border-teal-600/50 rounded-xl text-teal-100 hover:bg-teal-700/50 hover:text-white transition-colors flex items-center justify-center shadow-lg"
+      title="Re-Generate New Track with Same Prompts">
+      <i data-lucide="refresh-ccw-dot" class="w-5 h-5"></i>
+    </a>
+  </div>
+
+  <!-- Generation Prompt Section -->
+  <div class="bg-teal-900/40 rounded-2xl p-6 mb-6 border border-teal-700/50 shadow-md">
+    <h3 class="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
+      <i data-lucide="sparkles" class="w-6 h-6"></i>
+      Generation Prompt
+    </h3>
+    <p class="text-teal-50 leading-relaxed text-lg">
+      {% if music.genre.name %}a {{ music.genre.name }} song {% endif %}
+      {% if music.mood.name %}with a {{ music.mood.name }} mood {% endif %}
+      {% if music.usage_occupation %}suitable for {{ music.usage_occupation }} {% endif %}
+      {% if music.vocal_preference %}with {{ music.vocal_preference }} vocals {% endif %}
+      {{ music.description|default:"" }}
+      {% if not music.genre.name and not music.mood.name and not music.usage_occupation and not music.vocal_preference and not music.description %}
+      A simple music track
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Technical Details -->
+  <div class="bg-teal-900/40 rounded-2xl p-6 border border-teal-700/50 shadow-md">
+    <h3 class="text-xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
+      <i data-lucide="info" class="w-6 h-6"></i>
+      Technical Details
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+      <div>
+        <p class="text-teal-400/80 text-xs mb-1 uppercase tracking-wider font-bold">Genre</p>
+        <p class="text-white font-medium text-lg">{{ music.genre.name|default:"-" }}</p>
+      </div>
+      <div>
+        <p class="text-teal-400/80 text-xs mb-1 uppercase tracking-wider font-bold">Mood</p>
+        <p class="text-white font-medium text-lg">{{ music.mood.name|default:"-" }}</p>
+      </div>
+      <div>
+        <p class="text-teal-400/80 text-xs mb-1 uppercase tracking-wider font-bold">Vocal</p>
+        <p class="text-white font-medium text-lg">{{ music.vocal_preference|default:"-" }}</p>
+      </div>
+      <div>
+        <p class="text-teal-400/80 text-xs mb-1 uppercase tracking-wider font-bold">Usage</p>
+        <p class="text-white font-medium text-lg">{{ music.usage_occupation|default:"-" }}</p>
+      </div>
+      <div class="md:col-span-2 mt-2">
+        <p class="text-teal-400/80 text-xs mb-1 uppercase tracking-wider font-bold">Description</p>
+        <p class="text-white font-medium text-lg">{{ music.description|default:"-" }}</p>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+  function copyShareLink() {
+    navigator.clipboard.writeText(window.location.href);
+    alert("Link copied to clipboard!");
+  }
+
+  // Player synchronization is handled by base.html now.
+
+  (function() {
+    var isPending = "{{ music.generate_state }}" === "PENDING";
+    if (isPending) {
+      setTimeout(() => {
+        if (window.htmx) {
+          htmx.ajax('GET', window.location.href, {target: 'main', select: 'main'});
+        } else {
+          window.location.reload();
+        }
+      }, 3000);
+    }
+  })();
+</script>
 {% endblock %}

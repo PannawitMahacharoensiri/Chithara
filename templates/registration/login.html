@@ -1,20 +1,89 @@
 {% extends 'base.html' %}
 {% load socialaccount %}
 
+{# ==================================================================== #}
+{# GLOBAL AUTHENTICATION OVERRIDE                                       #}
+{# This file is located in 'templates/registration/' because Django's   #}
+{# built-in authentication system automatically looks for this specific #}
+{# path globally to render the login page.                              #}
+{# ==================================================================== #}
+
 {% block title %}Login - Chithara{% endblock %}
 
 {% block content %}
-<h2>Login</h2>
+<div class="flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        <!-- Login Card -->
+        <div class="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl">
+            <h2 class="text-3xl font-bold text-white mb-2 text-center">
+                Welcome Back
+            </h2>
+            <p class="text-cyan-100 text-center mb-8">
+                Sign in to continue creating
+            </p>
 
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Login</button>
-</form>
+            <form method="post" class="space-y-4" data-hx-boost="false">
+                {% csrf_token %}
 
-<hr>
-<p>Or log in with Google:</p>
-<a href="{% provider_login_url 'google' %}">
-  <button type="button">Login with Google</button>
-</a>
+                {% if form.errors %}
+                <div class="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-xl mb-4 text-sm">
+                    Please correct the errors below.
+                </div>
+                {% endif %}
+
+                <div>
+                    <label class="block text-white mb-2" for="{{ form.username.id_for_label }}">Username</label>
+                    <div class="relative">
+                        <i data-lucide="user"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300"></i>
+                        <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
+                            class="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            required autofocus>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-white mb-2" for="{{ form.password.id_for_label }}">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300"></i>
+                        <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}"
+                            class="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            required>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-xl hover:shadow-2xl transition-shadow font-bold mt-6">
+                    Sign In
+                </button>
+
+                <input type="hidden" name="next" value="{{ next|default:'/musics/' }}">
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-6">
+                <div class="flex-1 h-px bg-white/20"></div>
+                <span class="text-cyan-100 text-sm">or</span>
+                <div class="flex-1 h-px bg-white/20"></div>
+            </div>
+
+            <!-- Google Login -->
+            <form action="{% provider_login_url 'google' %}" method="post" data-hx-boost="false">
+                {% csrf_token %}
+                <button type="submit"
+                    class="w-full py-3 bg-white text-teal-900 rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 font-bold no-underline">
+                    <i data-lucide="chrome" class="w-5 h-5"></i>
+                    Continue with Google
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <a href="/" class="text-cyan-300 hover:text-white text-sm no-underline">
+                    &larr; Back to home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
