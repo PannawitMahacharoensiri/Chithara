@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import generate_music, library_music, music_detail, check_music_status, overview_music, cancel_music, delete_music
+from .views import generate_music, library_music, music_detail, check_music_status, overview_music, cancel_music, delete_music, download_music
 
 urlpatterns = [
     path("generate/", generate_music, name="generate_music"),
@@ -9,4 +9,5 @@ urlpatterns = [
     path("<int:id>/overview/", overview_music, name="overview_music"),
     path("<int:id>/cancel/", cancel_music, name="cancel_music"),
     path("<int:id>/delete/", delete_music, name="delete_music"),
+    path("<int:id>/download/", download_music, name="download_music"),
 ]

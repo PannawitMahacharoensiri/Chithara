@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse, StreamingHttpResponse, Http404
 from .services.generators.factory import get_generator
 from musics.utilities.music_form import MusicForm
 from .models.music_model import Music
@@ -6,7 +7,7 @@ from musics.enums.generate_state_enum import GenerateState
 from django.contrib.auth.decorators import login_required
 from musics.utilities.polling_task import start_polling_task
 import requests
-from django.core.files.base import ContentFile
+import re
 
 
 @login_required
@@ -173,3 +174,52 @@ def delete_music(request, id):
         music.save()
         return redirect("music_list")
     return render(request, "musics/confirm_delete.html", {"music": music})
+
+
+@login_required
+def download_music(request, id):
+    """
+    Proxy view to download music files.
+    This ensures the 'download' attribute works even for cross-origin URLs (like Suno CDN).
+    """
+    music = get_object_or_404(Music, id=id, owner=request.user)
+    if not music.audio_url:
+        raise Http404("Audio URL not found for this track.")
+
+    url = music.audio_url
+
+    # Handle relative local URLs (e.g., /media/song.mp3)
+    if url.startswith('/'):
+        url = request.build_absolute_uri(url)
+
+    try:
+        # Fetch the file from the remote source
+        response = requests.get(url, stream=True, timeout=15)
+        response.raise_for_status()
+
+        # Prepare the streaming response
+        def file_iterator(chunk_size=8192):
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                yield chunk
+
+        # Set appropriate content type from source or fallback to audio/mpeg
+        content_type = response.headers.get('Content-Type', 'audio/mpeg')
+
+        # Create StreamingHttpResponse for better performance with audio files
+        django_response = StreamingHttpResponse(file_iterator(), content_type=content_type)
+
+        # Format a clean filename for the user
+        safe_name = re.sub(r'[^\w\s\.-]', '', music.display_name)
+        if not safe_name: safe_name = "track"
+        filename = f"{safe_name}.mp3"
+
+        # Force download with Content-Disposition
+        django_response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return django_response
+
+    except requests.exceptions.RequestException as e:
+        # If the external URL fails, we could log it or show an error
+        return HttpResponse(f"Failed to fetch audio from source: {str(e)}", status=502)
+    except Exception as e:
+        return HttpResponse(f"An unexpected error occurred: {str(e)}", status=500)

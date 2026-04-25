@@ -133,7 +133,7 @@
 
           <!-- Download -->
           {% if music.audio_url %}
-          <a href="{{ music.audio_url }}" download
+          <a href="{% url 'download_music' music.id %}" download data-hx-boost="false"
             class="p-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors"
             title="Download">
             <i data-lucide="download" class="w-5 h-5"></i>
