@@ -5,19 +5,19 @@ The **Chitara AI Music Generator** is a standalone web-based system that allows 
 
 ## Project Structure:
 ### Structure Diagram
-**chithara**  
- ├── mysite/
- ├── accounts/
- ├── media/
- ├── templates/
- ├── musics/
- │   ├── enums/
- │   ├── migrations/
- │   ├── models/
- │   ├── services/
- │   ├── templates/
- │   └── utilities/
- └── manage.py
+**chithara** <br>  
+ ├── mysite/ <br>
+ ├── accounts/ <br>
+ ├── media/ <br>
+ ├── templates/ <br>
+ ├── musics/ <br>
+ │   ├── enums/ <br>
+ │   ├── migrations/ <br>
+ │   ├── models/ <br>
+ │   ├── services/ <br>
+ │   ├── templates/ <br>
+ │   └── utilities/ <br>
+ └── manage.py <br>
  
 ### Directory Responsibility
 - **mysite/** : Main Django configuration, project-level URL routing, and global settings.
@@ -58,7 +58,7 @@ source venv_name/bin/activate
 #### 3. Install dependencies
 ```
 cd Chithara
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 #### 4. Set up the Key
@@ -94,16 +94,15 @@ http://127.0.0.1:8000/
 ## How to select Generate Strategy (Mock or Suno).
 You can select the generation strategy directly on the **Generate page** it is one of the input fields in the generation form. Simply choose **Mock** (instant, no API key needed) or **Suno** (real AI generation) from the dropdown before submitting.
 
-See the [Demonstration Video](#demonstration-video) below for a live walkthrough.
-
-
+See the [Demonstration Video](https://youtu.be/NthGzOtg60w) below for a live walkthrough.
 
 ## Demonstration Video:
 - [CRUD demonstrate video ](https://youtu.be/Py9o0Sbzmw4)
+- [generate strategy demonstrate video](https://youtu.be/NthGzOtg60w)
 
 ## Project Wiki:
 - [Chithara Wiki](https://github.com/PannawitMahacharoensiri/Chithara/wiki)
-> All of the Analyzed Diagram are kept in the GitHub Wiki. These includes : class diagram (MVC), domain modeling, sequence diagram, Use Case Diagram.
+> All of the Analysis Diagram are kept in the GitHub Wiki. These includes : class diagram (MVC), domain modeling, sequence diagram, Use Case Diagram.
 
 ## License
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
