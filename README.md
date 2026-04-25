@@ -58,7 +58,7 @@ source venv_name/bin/activate
 #### 3. Install dependencies
 ```
 cd Chithara
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 #### 4. Set up the Key
