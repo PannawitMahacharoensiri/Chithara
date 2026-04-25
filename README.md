@@ -102,7 +102,7 @@ See the [Demonstration Video](https://youtu.be/NthGzOtg60w) below for a live wal
 
 ## Project Wiki:
 - [Chithara Wiki](https://github.com/PannawitMahacharoensiri/Chithara/wiki)
-> All of the Analyzed Diagram are kept in the GitHub Wiki. These includes : class diagram (MVC), domain modeling, sequence diagram, Use Case Diagram.
+> All of the Analysis Diagram are kept in the GitHub Wiki. These includes : class diagram (MVC), domain modeling, sequence diagram, Use Case Diagram.
 
 ## License
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
