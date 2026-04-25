@@ -24,7 +24,7 @@ def create_default_music_for_new_user(sender, instance, created, **kwargs):
             task_id="1032ba4f9b417a4bbba5cdddfdd534f1",
             genre=genre,
             mood=mood,
-            generate_state="complete",
+            generate_state="COMPLETED",
             generator_strategy="suno",
             audio_url="/media/WIN.mp3",
             usage_occupation="Theme Song",

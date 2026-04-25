@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block title %}Sign Up - Chithara{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        <!-- Signup Card -->
+        <div class="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl">
+            <h2 class="text-3xl font-bold text-white mb-2 text-center">
+                Create Account
+            </h2>
+            <p class="text-cyan-100 text-center mb-8">
+                Join Chithara and start creating
+            </p>
+
+            <form method="post" class="space-y-4" data-hx-boost="false">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-xl mb-4 text-sm">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% for field in form %}
+                <div>
+                    <label class="block text-white mb-2" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="relative">
+                        {% if field.name == 'username' %}
+                            <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300"></i>
+                        {% else %}
+                            <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300"></i>
+                        {% endif %}
+                        {{ field }}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <button type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-xl hover:shadow-2xl transition-shadow font-bold mt-6">
+                    Sign Up
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-cyan-100 text-sm mb-4">Already have an account?</p>
+                <a href="{% url 'login' %}" class="text-cyan-300 hover:text-white text-sm font-bold no-underline">
+                    Sign In
+                </a>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a href="/" class="text-cyan-300/60 hover:text-white text-xs no-underline">
+                    &larr; Back to home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

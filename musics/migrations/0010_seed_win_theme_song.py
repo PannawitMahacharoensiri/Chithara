@@ -29,7 +29,7 @@ def seed_win_music(apps, schema_editor):
                 "display_name": "WIN",
                 "genre": genre,
                 "mood": mood,
-                "generate_state": "complete",
+                "generate_state": "COMPLETED",
                 "generator_strategy": "suno",
                 "audio_url": "/media/WIN.mp3",
                 "usage_occupation": "Theme Song",
